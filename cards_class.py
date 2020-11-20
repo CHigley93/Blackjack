@@ -77,30 +77,35 @@ class Deck:
             number -= 1
         return dealt
 
+    def pick_by_index(self, i):
+        picked = [self.cards[i]]
+        del self.cards[i]
+        return picked
 
-class Hand:
+    def pick_by_value(self, value):
+        picked = []
+        for card in self.cards:
+            if card.value == value:
+                picked.append(card)
+                return picked
+            else:
+                raise ValueError("That card is not in this deck")
+
+
+class Hand(Deck):
     # create an empty list for cards to be put in.
     def __init__(self):
+        super().__init__()
         self.cards = []
 
-    # String method for showing the cards in the hand
-    def __str__(self):
-        names = ""
-        count = 0
+    def pick_by_value(self, value):
+        picked = []
         for card in self.cards:
-            names += str(card) + ", "
-            count += 1
-            if count % 13 == 0:
-                names += "\n"
-        return names
+            if card.value == value:
+                picked.append(card)
+                return picked
+            else:
+                raise ValueError("That card is not in this hand")
 
-    # deal method to remove cards from the deck and return them as a list
-    def deal(self, number: int):
-        if type(number) != int or number < 1:
-            raise ValueError("You must choose a positive integer value")
-        dealt = []
-        while number > 0:
-            dealt.append(self.cards[0])
-            del self.cards[0]
-            number -= 1
-        return dealt
+
+
