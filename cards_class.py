@@ -1,45 +1,51 @@
 import random
+from enum import Enum, auto, IntEnum
+
+
+class Suit(Enum):
+    # card suits, use auto to give unique, incomparable values, since no suit inherently comes before another
+    Clubs = auto()
+    Diamonds = auto()
+    Hearts = auto()
+    Spades = auto()
+
+class Rank(IntEnum):
+
+    # Card ranks in order of value
+    Ace = 1
+    Two = 2
+    Three = 3
+    Four = 4
+    Five = 5
+    Six = 6
+    Seven = 7
+    Eight = 8
+    Nine = 9
+    Ten = 10
+    Jack = 11
+    Queen = 12
+    King = 13
 
 
 class Card:
-    # possible values for rank and suit
-    nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
-    suits = [1, 2, 3, 4]
 
     # Initialize card with valid rank and suit
-    def __init__(self, suit: int, rank: int):
-        if suit not in self.suits:
-            raise ValueError("%d is not a valid suit." % suit)
-        if rank not in self.nums:
-            raise ValueError("%d is not a valid title." % rank)
+    def __init__(self, suit, rank: int):
 
+        # Check that the suit is valid
+        if not isinstance(suit, Suit):
+            raise ValueError("{} is an invalid CardSuit.".format(suit))
         self.suit = suit
+
+        # Check that the rank is valid
+        if not isinstance(rank, Rank):
+            raise ValueError("{} is an invalid CardRank.".format(rank))
         self.rank = rank
         self.value = [suit, rank]
 
     # Change the __str__ method so it prints out in "rank of suit" format
     def __str__(self):
-        if self.suit == 1:
-            suit = "Clubs"
-        elif self.suit == 2:
-            suit = "Diamonds"
-        elif self.suit == 3:
-            suit = "Hearts"
-        elif self.suit == 4:
-            suit = "Spades"
-
-        if self.rank == 1:
-            rank = "Ace"
-        elif 1 < self.rank < 11:
-            rank = str(self.rank)
-        elif self.rank == 11:
-            rank = "Jack"
-        elif self.rank == 12:
-            rank = "Queen"
-        elif self.rank == 13:
-            rank = "King"
-
-        return rank + " of " + suit
+        return self.rank.name + " of " + self.suit.name
 
 
 class Deck:
@@ -47,8 +53,8 @@ class Deck:
     def __init__(self):
         self.cards = []
         # self.cards = cards
-        for s in range(1, 5):
-            for r in range(1, 14):
+        for s in Suit:
+            for r in Rank:
                 self.cards.append(Card(s, r))
 
     # Change __str__ method so that the deck prints out each card with 13 cards per line
@@ -68,14 +74,17 @@ class Deck:
 
     # deal method to remove cards from the deck and return them as a list
     def deal(self, number: int):
+        dealt = []
         if type(number) != int or number < 1:
             raise ValueError("You must choose a positive integer value")
-        dealt = []
-        while number > 0:
-            dealt.append(self.cards[0])
-            del self.cards[0]
-            number -= 1
-        return dealt
+        elif number > len(self.cards):
+            raise ValueError("There aren't that many cards to deal")
+        else:
+            while number > 0:
+                dealt.append(self.cards[0])
+                del self.cards[0]
+                number -= 1
+            return dealt
 
     def pick_by_index(self, i):
         picked = [self.cards[i]]

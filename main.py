@@ -1,20 +1,41 @@
 import cards_class
 import time
 
-deck1 = cards_class.Deck()
-dealer_hand = cards_class.Hand()
-player_hand = cards_class.Hand()
-busted = 0
 
+def make_a_bet(money: int, player_bet: int):
+    choice = ""
+    while not(0 <= int(choice) <= money):
+        choice = input("You have: %d\nWhat would you like to bet?\n" % money)
+        if not(0 <= int(choice) <= money):
+            raise ValueError("Not a valid choice")
+        else:
+            print("You bet: %d" % int(choice))
+            player_bet = int(choice)
+            money -= player_bet
+            return player_bet
+        
+def play_again():
+    # asks if player wants to play again, returns false for yes and true for no
+    choice = ""
+    while choice.lower() not in ["yes", "no"]:
+        choice = input("Would you like to play again?\n")
+        if choice.lower() == "yes":
+            return False
+        elif choice.lower() == "no":
+            return True
+
+def discard_hand(hand: cards_class.Hand, deck: cards_class.Deck):
+    for i in range(len(hand.cards) - 1, -1, -1):
+        deck.cards.extend(hand.pick_by_index(i))
 
 # scoring method conforming to blackjack rules
 def score(cards):
     total = 0
     aces = 0
     for card in cards:
-        if 11 > card.rank > 1:
+        if 10 >= card.rank >= 2:
             total += card.rank
-        elif 10 < card.rank < 14:
+        elif 11 <= card.rank <= 13:
             total += 10
         elif card.rank == 1:
             aces += 1
@@ -33,7 +54,7 @@ def score(cards):
 
 # Starts the game by shuffling the deck, dealing 2 cards to the player and dealer, and displaying cards and score
 def start_game(deck: cards_class.Deck, player: cards_class.Hand, dealer: cards_class.Hand):
-    deck.shuffle()
+    #deck.shuffle()
     player.cards.extend(deck.deal(2))
     dealer.cards.extend(deck.deal(2))
     print("The dealer is showing the %s" % dealer.cards[1])
@@ -120,15 +141,31 @@ def score_check(player: cards_class.Hand, dealer: cards_class.Hand):
         print("You lose")
 
 
-start_game(deck1, player_hand, dealer_hand)
-player_hands = [player_hand]
-player_hands = split_or_not(player_hand, deck1)
-for hand in player_hands:
-    hit_or_stand(hand, deck1)
-for hand in player_hands:
-    if score(hand.cards) > 21:
-        busted += 1
-if busted < 2:
-    dealer_play(dealer_hand, deck1)
-for hand in player_hands:
-    score_check(hand, dealer_hand)
+deck1 = cards_class.Hand()
+for i in range(4):
+    deck1.cards.extend(cards_class.Deck().deal(52))
+deck1.shuffle()
+dealer_hand = cards_class.Hand()
+player_hand = cards_class.Hand()
+player_quit = False
+
+while not player_quit:
+    #Setup hands for player and dealer
+    bet = 0
+    start_game(deck1, player_hand, dealer_hand)
+    busted = 0
+    player_hands = [player_hand]
+    player_hands = split_or_not(player_hand, deck1)
+    for hand in player_hands:
+        hit_or_stand(hand, deck1)
+    for hand in player_hands:
+        if score(hand.cards) > 21:
+            busted += 1
+    if busted < 2:
+        dealer_play(dealer_hand, deck1)
+    for hand in player_hands:
+        score_check(hand, dealer_hand)
+    player_quit = play_again()
+    for hand in player_hands:
+        discard_hand(hand,deck1)
+    discard_hand(dealer_hand,deck1)
