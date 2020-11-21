@@ -1,6 +1,11 @@
 import cards_class
 import time
 
+deck1 = cards_class.Deck()
+dealer_hand = cards_class.Hand()
+player_hand = cards_class.Hand()
+busted = 0
+
 
 # scoring method conforming to blackjack rules
 def score(cards):
@@ -26,158 +31,104 @@ def score(cards):
     return total
 
 
-deck1 = cards_class.Deck()
-dealerHand = cards_class.Hand()
-playerHand = cards_class.Hand()
+# Starts the game by shuffling the deck, dealing 2 cards to the player and dealer, and displaying cards and score
+def start_game(deck: cards_class.Deck, player: cards_class.Hand, dealer: cards_class.Hand):
+    deck.shuffle()
+    player.cards.extend(deck.deal(2))
+    dealer.cards.extend(deck.deal(2))
+    print("The dealer is showing the %s" % dealer.cards[1])
+    print("Your hand is %s" % (player.__str__()))
+    print("Your score is: %s" % (score(player.cards)))
 
-deck1.shuffle()
-dealerHand.cards.extend(deck1.deal(2))
-playerHand.cards.extend(deck1.deal(2))
-end = False
-chosen = False
-print("Welcome to BlackJack!")
-print("The dealer is currently showing %s" % (str(dealerHand.cards[1])))
-print("Your hand is: %s" % (playerHand.__str__()))
-print("Your score is %s" % (score(playerHand.cards)))
 
-# as long as no win or loss condition is met it will go through these actions
-while not end:
-
-    # Check if the player busted, and if they did finish the game
-    if score(playerHand.cards) >= 21:
-        print("It is my unfortunate privilege to tell you that you went bust and that means you lost the game.")
-        end = True
-    elif playerHand.cards[0].rank == playerHand.cards[1].rank and chosen == False:
-        choice = input("Would you like to split your hand?\n")
-        commands = ["y", "yes", "n", "no"]
-        while choice.lower() not in commands:
+def split_or_not(hand: cards_class.Hand, deck: cards_class.Deck):
+    if hand.cards[0].rank == hand.cards[1].rank:
+        answers = ["yes", "no"]
+        choice = ""
+        while choice not in answers:
             choice = input("Would you like to split your hand?\n")
-        if choice.lower() == "n" or choice.lower() == "no":
-            print("Ok we won't split your cards")
-            chosen = True
-        elif choice.lower() == "y" or choice.lower() == "yes":
-            playerHand2 = cards_class.Hand()
-            playerHand2.cards.extend(playerHand.pick_by_index(0))
-            print("You split your hand")
-            time.sleep(1)
-            playerHand.cards.extend(deck1.deal(1))
-            playerHand2.cards.extend(deck1.deal(1))
-            print("Your first hand is %s with a score of %d" % (playerHand.__str__(), score(playerHand.cards)))
-            time.sleep(1)
-            print("Your second hand is %s with a score of %d" % (playerHand2.__str__(), score(playerHand2.cards)))
-            time.sleep(1)
-            print("We will play your first hand first")
-
-            choice = input("Hit or Stand?\n")
-            commands = ["hit", "stand"]
-            while choice.lower() not in commands:
-                choice = input("Hit or Stand?\n")
-                # Player chooses to hit for 1st hand
-
-                if choice.lower() == "hit":
-                    playerHand.cards.extend(deck1.deal(1))
-                    print("You are dealt one card")
-                    print("Your first hand is: %s" % (playerHand.__str__()))
-                    print("Your first hand score is %s" % (score(playerHand.cards)))
-                    choice = ""
-                # Player chooses to stand for 1st hand
-                elif choice.lower() == "stand":
-
-                    # Begin playing 2nd hand
-                    print("Now we will play your second hand")
-                    print("Your second hand is: %s" % (playerHand2.__str__()))
-                    print("Your second hand score is %s" % (score(playerHand2.cards)))
-
-                    choice = input("Hit or Stand?\n")
-                    commands = ["hit", "stand"]
-                    while choice.lower() not in commands:
-                        choice = input("Hit or Stand?\n")
-
-                    # Player chooses to hit for 2nd hand
-                    if choice.lower() == "hit":
-                        playerHand.cards.extend(deck1.deal(1))
-                        print("You are dealt one card")
-                        print("Your second hand is: %s" % (playerHand2.__str__()))
-                        print("Your second hand score is %s" % (score(playerHand2.cards)))
-
-                    # Player chooses to stand for 2nd hand
-                    elif choice.lower() == "stand":
-                        # Loop for the dealer to take his turn, drawing until they have at least 17 and have not gone
-                        # bust
-                        while not end:
-                            time.sleep(1)
-                            print("The dealer's hand is: %s" % (dealerHand.__str__()))
-                            print("The dealer score is %s" % (score(dealerHand.cards)))
-                            if score(dealerHand.cards) < 17:
-                                print("The dealer hits")
-                                dealerHand.cards.extend(deck1.deal(1))
-                            elif 17 <= score(dealerHand.cards) <= 21:
-                                print("The dealer stands")
-                                time.sleep(1)
-                                print("The dealer's hand is: %s" % (dealerHand.__str__()))
-                                print("The dealer score is %s" % (score(dealerHand.cards)))
-                                time.sleep(1)
-
-
-    # Loop for the player to hit or stand and then for the dealer to take his turn
+            if choice.lower() == "yes":
+                print("You split your hand")
+                hand2 = cards_class.Hand()
+                hand2.cards.extend(hand.pick_by_index(0))
+                hand.cards.extend(deck.deal(1))
+                hand2.cards.extend(deck.deal(1))
+                print("Your new hands are %s with a score of %s and %s with a score of %s" % (
+                    hand.__str__(), score(hand.cards), hand2.__str__(), score(hand2.cards)))
+                return [hand, hand2]
+            elif choice.lower() == "no":
+                print("You do not split your hand")
+                return [hand]
     else:
-        choice = input("Hit or Stand?\n")
-        commands = ["hit", "stand"]
-        while choice.lower() not in commands:
-            choice = input("Hit or Stand?\n")
+        return [hand]
+
+
+# Allows the player to hit until bust or they choose to stand for 1 hand, returns True if they are still playing
+# and False if they are Busted
+def hit_or_stand(hand: cards_class.Hand, deck: cards_class.Deck):
+    stood = False
+    while not stood:
+        print("You have %s with a score of %s" % (hand.__str__(), score(hand.cards)))
+        choice = input("Hit or stand?\n")
         if choice.lower() == "hit":
-            playerHand.cards.extend(deck1.deal(1))
-            print("You are dealt one card")
-            print("Your hand is: %s" % (playerHand.__str__()))
-            print("Your score is %s" % (score(playerHand.cards)))
+            print("Dealt one card")
+            hand.cards.extend(deck.deal(1))
+            print("Your hand is %s" % (hand.__str__()))
+            print("Your score is: %s" % (score(hand.cards)))
+            if score(hand.cards) > 21:
+                print("Busted")
+            else:
+                continue
         elif choice.lower() == "stand":
-            print("The dealer shows his cards")
-            # Loop for the dealer to take his turn, drawing until they have at least 17 and have not gone bust
-            while not end:
-                time.sleep(1)
-                print("The dealer's hand is: %s" % (dealerHand.__str__()))
-                print("The dealer score is %s" % (score(dealerHand.cards)))
-                # Dealer hits
-                if score(dealerHand.cards) < 17:
-                    print("The dealer hits")
-                    dealerHand.cards.extend(deck1.deal(1))
-                # Dealer goes bust
-                elif score(dealerHand.cards) > 21:
-                    time.sleep(1)
-                    print("The dealer went bust.  Poor, poor dealer...Good for you though, you win!")
-                    end = True
-                # Dealer stands
-                else:
-                    time.sleep(1)
-                    print("The dealer stands")
-                    time.sleep(1)
-                    print("The dealer's score is: %s" % (score(dealerHand.cards)))
-                    time.sleep(1)
-                    print("Your score is: %s" % (score(playerHand.cards)))
+            stood = True
 
-                    # Check if dealer has better hand
-                    if score(dealerHand.cards) > score(playerHand.cards):
-                        time.sleep(1)
-                        print("%d is bigger than %d, that means you're the big sad loser" % (
-                            score(dealerHand.cards), score(playerHand.cards)))
-                        end = True
 
-                    # Dealer gets blackjack
-                    elif score(dealerHand.cards) == 21:
-                        time.sleep(1)
-                        print("The dealer wins!  Hooray for the dealer! Boo for you though, you lost big time")
-                        end = True
+# dealer hits until they are at 17 or higher
+def dealer_play(hand: cards_class.Hand, deck: cards_class.Deck):
+    end = False
+    while not end:
+        print("The dealer is showing %s" % (hand.__str__()))
+        print("The dealer's score is %s" % (score(hand.cards)))
+        if score(hand.cards) > 21:
+            time.sleep(1)
+            print("The dealer busts!")
+            end = True
+        elif score(hand.cards) > 17:
+            time.sleep(1)
+            print("The dealer stands")
+            end = True
+        else:
+            time.sleep(1)
+            print("The dealer hits")
+            hand.cards.extend(deck.deal(1))
 
-                    # Check if dealer has worse score
-                    elif score(dealerHand.cards) < score(playerHand.cards):
-                        time.sleep(1)
-                        print(
-                            "%d is bigger than %d, that means that dumb-dumb dealer lost the game, and you won!" % (
-                                score(playerHand.cards), score(dealerHand.cards)))
-                        end = True
-                    # Check for a draw
-                    elif score(dealerHand.cards) == score(playerHand.cards):
-                        time.sleep(1)
-                        print("You tied with the dealer.  That means the dealer wins, and you lose, unfair, "
-                              "but that's life")
-                        end = True
+
+def score_check(player: cards_class.Hand, dealer: cards_class.Hand):
+    print("The dealer has %s and his score is %s" % (dealer.__str__(), score(dealer.cards)))
+    print("You have %s and your score is %s" % (player.__str__(), score(player.cards)))
+    if score(player.cards) > 21:
+        time.sleep(1)
+        print("You lose")
+    elif score(dealer.cards) > 21:
+        time.sleep(1)
+        print("You win")
+    elif score(player.cards) > score(dealer.cards):
+        time.sleep(1)
+        print("You win")
+    else:
+        time.sleep(1)
+        print("You lose")
+
+
+start_game(deck1, player_hand, dealer_hand)
+player_hands = [player_hand]
+player_hands = split_or_not(player_hand, deck1)
+for hand in player_hands:
+    hit_or_stand(hand, deck1)
+for hand in player_hands:
+    if score(hand.cards) > 21:
+        busted += 1
+if busted < 2:
+    dealer_play(dealer_hand, deck1)
+for hand in player_hands:
+    score_check(hand, dealer_hand)
