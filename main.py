@@ -90,7 +90,7 @@ def double_bet(hand: cards_class.Hand, cash: int, deck: cards_class.Deck):
                 return hand.wager, cash
             elif choice.lower() == "no":
                 print("You do not double your hand")
-                return False
+                return hand.wager, cash
             else:
                 continue
     else:
@@ -186,12 +186,14 @@ dealer_hand = cards_class.Hand()
 player_hand = cards_class.Hand()
 replay = True
 player_money = 500
+player_hands = []
 
 while replay:
     # Discard cards back into bottom of the deck
     for hand in player_hands:
         discard_hand(hand, deck1)
     discard_hand(dealer_hand, deck1)
+    player_hands = [player_hand]
     # ask for a bet
     player_hand.wager, player_money = make_a_bet(player_money, player_hand)
     # Setup hands for player and dealer
