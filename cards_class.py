@@ -9,8 +9,8 @@ class Suit(Enum):
     Hearts = auto()
     Spades = auto()
 
-class Rank(IntEnum):
 
+class Rank(IntEnum):
     # Card ranks in order of value
     Ace = 1
     Two = 2
@@ -103,9 +103,10 @@ class Deck:
 
 class Hand(Deck):
     # create an empty list for cards to be put in.
-    def __init__(self):
+    def __init__(self, wager=0):
         super().__init__()
         self.cards = []
+        self.wager = wager
 
     def pick_by_value(self, value):
         picked = []
@@ -115,6 +116,3 @@ class Hand(Deck):
                 return picked
             else:
                 raise ValueError("That card is not in this hand")
-
-
-
