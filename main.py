@@ -34,7 +34,7 @@ def start_game(deck: cards_class.Deck, player: cards_class.Hand, dealer: cards_c
     print("The dealer is showing the {}".format(dealer.cards[1]))
 
 
-def make_a_bet(money: int, betting_hand: cards_class.Hand()):
+def make_a_bet(money: int, betting_hand: cards_class.Hand):
     choice = "-1"
     while not (1 <= int(choice) <= money):
         choice = input("You have: {}\nWhat would you like to bet?\n".format(money))
@@ -44,7 +44,7 @@ def make_a_bet(money: int, betting_hand: cards_class.Hand()):
             print("You bet: {}".format(int(choice)))
             betting_hand.wager = int(choice)
             money -= betting_hand.wager
-            return betting_hand.wager, money
+            return money
 
 
 def split_or_not(hand: cards_class.Hand, deck: cards_class.Deck, cash: int):
@@ -52,6 +52,7 @@ def split_or_not(hand: cards_class.Hand, deck: cards_class.Deck, cash: int):
         answers = ["yes", "no"]
         choice = ""
         while choice not in answers:
+            print("Your hand is {} with a score of {}".format(hand.cards,score(hand.cards)))
             choice = input("Would you like to split your hand?\n")
             if choice.lower() == "yes":
                 print("You split your hand")
@@ -72,36 +73,37 @@ def split_or_not(hand: cards_class.Hand, deck: cards_class.Deck, cash: int):
 
 def double_bet(hand: cards_class.Hand, cash: int, deck: cards_class.Deck):
     if hand.wager <= cash:
+        print("You have {} with a score of {}".format(hand, score(hand.cards)))
         choice = ""
         options = ["yes", "no"]
         while choice.lower() not in options:
             choice = input("Would you like to double your hand?\n"
-                           "You would double your bet of {0} money to {0} money".format(hand.wager))
+                           "You would double your bet of {} money to {} money\n".format(hand.wager,2*hand.wager))
             if choice.lower() == "yes":
                 cash -= hand.wager
-                hand.wager *= 2
                 print("You bet an additional {}".format(hand.wager))
-                time.sleep(1)
+                hand.wager *= 2
+                time.sleep(3)
                 print("Dealt one card")
                 hand.cards.extend(deck.deal(1))
                 print("You have {} with a score of {}".format(hand.__str__(), score(hand.cards)))
                 if score(hand.cards) > 21:
                     print("Busted")
-                return hand.wager, cash
+                return cash, True
             elif choice.lower() == "no":
                 print("You do not double your hand")
-                return hand.wager, cash
+                return cash, False
             else:
                 continue
     else:
-        return False
+        return cash, False
 
 
 # Allows the player to hit until bust or they choose to stand for 1 hand, returns True if they are still playing
 # and False if they are Busted
 def hit_or_stand(hand: cards_class.Hand, deck: cards_class.Deck):
-    stood = False
-    while not stood:
+    turn_over = False
+    while not turn_over:
         print("You have {} with a score of {}".format(hand.__str__(), score(hand.cards)))
         choice = input("Hit or stand?\n")
         if choice.lower() == "hit":
@@ -109,53 +111,52 @@ def hit_or_stand(hand: cards_class.Hand, deck: cards_class.Deck):
             hand.cards.extend(deck.deal(1))
             if score(hand.cards) > 21:
                 print("Busted")
-                return 0
+                turn_over = True
             else:
                 continue
         elif choice.lower() == "stand":
-            stood = True
-            return hand.wager
+            turn_over = True
 
 
 # dealer hits until they are at 17 or higher
 def dealer_play(hand: cards_class.Hand, deck: cards_class.Deck):
     end = False
     while not end:
-        print("The dealer is showing %s" % (hand.__str__()))
-        print("The dealer's score is %s" % (score(hand.cards)))
+        print("The dealer is showing {}".format(hand.__str__()))
+        print("The dealer's score is {}".format(score(hand.cards)))
         if score(hand.cards) > 21:
-            time.sleep(1)
+            time.sleep(3)
             print("The dealer busts!")
             end = True
         elif score(hand.cards) > 17:
-            time.sleep(1)
+            time.sleep(3)
             print("The dealer stands")
             end = True
         else:
-            time.sleep(1)
+            time.sleep(3)
             print("The dealer hits")
             hand.cards.extend(deck.deal(1))
 
 
 def score_check(player: cards_class.Hand, dealer: cards_class.Hand):
-    print("The dealer has %s and his score is %s" % (dealer.__str__(), score(dealer.cards)))
-    print("You have %s and your score is %s" % (player.__str__(), score(player.cards)))
+    print("The dealer has {} and his score is {}".format(dealer.__str__(), score(dealer.cards)))
+    print("You have {} and your score is {}".format(player.__str__(), score(player.cards)))
     if score(player.cards) > 21:
-        time.sleep(1)
-        print("You lose %d money" % player.wager)
-        return 0
+        time.sleep(3)
+        print("You lose {} money".format(player.wager))
+        hand.wager = 0
     elif score(dealer.cards) > 21:
-        time.sleep(1)
-        print("You win %d money" % player.wager)
-        return 2
+        time.sleep(3)
+        print("You win {} money".format(player.wager))
+        hand.wager *= 2
     elif score(player.cards) > score(dealer.cards):
-        time.sleep(1)
-        print("You win %d money" % player.wager)
-        return 2
+        time.sleep(3)
+        print("You win {} money".format(player.wager))
+        hand.wager *= 2
     else:
-        time.sleep(1)
-        print("You lose %d money" % player.wager)
-        return 0
+        time.sleep(3)
+        print("You lose {} money".format(player.wager))
+        hand.wager = 0
 
 
 def play_again(cash: int):
@@ -193,29 +194,30 @@ while replay:
     for hand in player_hands:
         discard_hand(hand, deck1)
     discard_hand(dealer_hand, deck1)
-    player_hands = [player_hand]
     # ask for a bet
-    player_hand.wager, player_money = make_a_bet(player_money, player_hand)
+    player_money = make_a_bet(player_money, player_hand)
     # Setup hands for player and dealer
     start_game(deck1, player_hand, dealer_hand)
     busted = 0
-    player_hands = [player_hand]
     # Check for possible split
     player_hands, player_money = split_or_not(player_hand, deck1, player_money)
-    # go through each hand until player busts or stands
+    # go through each hand until player doubles, busts or stands
     for hand in player_hands:
-        hit_or_stand(hand, deck1)
+        double = False
+        player_money, double = double_bet(hand, player_money, deck1)
+        if not double:
+            hit_or_stand(hand, deck1)
     # Calculate how many hands busted
     for hand in player_hands:
         if score(hand.cards) > 21:
             busted += 1
-    # Check if there is at lest one non busted hand
+    # Check if there is at least one non busted hand
     if busted < len(player_hands):
         # Play the dealer's hand
         dealer_play(dealer_hand, deck1)
     # Check who won
     for hand in player_hands:
-        hand.wager *= score_check(hand, dealer_hand)
+        score_check(hand, dealer_hand)
         player_money += hand.wager
     # ask to play again
     replay = play_again(player_money)
